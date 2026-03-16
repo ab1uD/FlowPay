@@ -1,31 +1,35 @@
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-blue-600">
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center text-white">
+      
+      <div className="text-center max-w-xl px-6">
+        
+        <h1 className="text-5xl font-bold mb-4">
           FlowPay
         </h1>
 
-        <p className="mt-4 text-gray-600">
-          Peer-to-Peer Digital Wallet
+        <p className="text-lg opacity-90 mb-8">
+          Send and receive money instantly with a secure peer-to-peer wallet.
         </p>
 
-        <div className="mt-6 space-x-4">
+        <div className="flex gap-4 justify-center">
           <a
             href="/login"
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold shadow hover:scale-105 transition"
           >
             Login
           </a>
 
           <a
             href="/register"
-            className="border border-blue-600 text-blue-600 px-4 py-2 rounded"
+            className="border border-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition"
           >
             Register
           </a>
         </div>
+
       </div>
-    </main>
+
+    </div>
   );
 }
