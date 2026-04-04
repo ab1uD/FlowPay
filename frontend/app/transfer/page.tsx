@@ -15,6 +15,9 @@ export default function TransferPage() {
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState<number>(0);
   const [myWalletId, setMyWalletId] = useState<number | null>(null);
+  const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
+  const [recipientMessage, setRecipientMessage] = useState("");
+  const [verifyingRecipient, setVerifyingRecipient] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -60,6 +63,12 @@ export default function TransferPage() {
       return;
     }
 
+    if (myWalletId !== null && walletIdNum === myWalletId) {
+      setError("You cannot transfer to your own wallet");
+      setLoading(false);
+      return;
+    }
+
     const result = await transactionApi.transfer(walletIdNum, amountNum);
 
     if (result.error) {
@@ -76,6 +85,38 @@ export default function TransferPage() {
     }
 
     setLoading(false);
+  };
+
+  const verifyRecipient = async () => {
+    setError("");
+    setSuccess("");
+    setRecipientMessage("");
+    setRecipientValid(null);
+
+    const walletIdNum = parseInt(walletId);
+    if (isNaN(walletIdNum)) {
+      setRecipientMessage("Please enter a valid wallet ID to verify");
+      setRecipientValid(false);
+      return;
+    }
+
+    if (myWalletId !== null && walletIdNum === myWalletId) {
+      setRecipientMessage("You cannot verify your own wallet");
+      setRecipientValid(false);
+      return;
+    }
+
+    setVerifyingRecipient(true);
+    const result = await walletApi.verify(walletIdNum);
+    setVerifyingRecipient(false);
+
+    if (result.error) {
+      setRecipientMessage(result.error);
+      setRecipientValid(false);
+    } else {
+      setRecipientMessage("Recipient wallet verified");
+      setRecipientValid(true);
+    }
   };
 
   if (!isAuthenticated) {
@@ -130,14 +171,36 @@ export default function TransferPage() {
               <label className="block text-sm font-medium mb-1">
                 Recipient Wallet ID
               </label>
-              <input
-                type="number"
-                value={walletId}
-                onChange={(e) => setWalletId(e.target.value)}
-                className="border p-2 w-full rounded"
-                placeholder="Enter wallet ID"
-                required
-              />
+              <div className="flex gap-2 items-start">
+                <input
+                  type="number"
+                  value={walletId}
+                  onChange={(e) => {
+                    setWalletId(e.target.value);
+                    setRecipientValid(null);
+                    setRecipientMessage("");
+                  }}
+                  className="border p-2 w-full rounded"
+                  placeholder="Enter wallet ID"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={verifyRecipient}
+                  disabled={verifyingRecipient || walletId.trim() === ""}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {verifyingRecipient ? "Checking..." : "Verify"}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Use the recipient's wallet ID shown on their dashboard.
+              </p>
+              {recipientMessage && (
+                <p className={`mt-1 text-sm ${recipientValid ? "text-green-600" : "text-red-600"}`}>
+                  {recipientMessage}
+                </p>
+              )}
             </div>
 
             <div className="mb-4">

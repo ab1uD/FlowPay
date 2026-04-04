@@ -79,8 +79,8 @@ export const transactionApi = {
   getAll: async () => {
     return fetchApi<Array<{
       amount: number;
-      sender: number;
-      receiver: number;
+      type: "sent" | "received";
+      other_party_wallet_id: number;
     }>>("/transactions", {
       method: "GET",
     });

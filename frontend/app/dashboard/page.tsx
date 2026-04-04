@@ -14,11 +14,13 @@ interface Transaction {
 export default function DashboardPage() {
   const router = useRouter();
   const { isAuthenticated, logout, user } = useAuth();
+
   const [balance, setBalance] = useState<number | null>(null);
   const [walletId, setWalletId] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
   const [addMoneyAmount, setAddMoneyAmount] = useState("");
   const [addMoneyLoading, setAddMoneyLoading] = useState(false);
@@ -35,21 +37,23 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
 
-      // Fetch wallet balance
-      const walletResult = await walletApi.getBalance();
-      if (walletResult.error) {
-        setError(walletResult.error);
-      } else if (walletResult.data) {
-        setBalance(walletResult.data.balance);
-        setWalletId(walletResult.data.id);
-      }
+      try {
+        const walletResult = await walletApi.getBalance();
+        if (walletResult.error) throw new Error(walletResult.error);
 
-      // Fetch transactions
-      const transactionsResult = await transactionApi.getAll();
-      if (transactionsResult.error) {
-        setError(transactionsResult.error);
-      } else if (transactionsResult.data) {
-        setTransactions(transactions);
+        if (walletResult.data) {
+          setBalance(walletResult.data.balance);
+          setWalletId(walletResult.data.id);
+        }
+
+        const transactionsResult = await transactionApi.getAll();
+        if (transactionsResult.error) throw new Error(transactionsResult.error);
+
+        if (transactionsResult.data) {
+          setTransactions(transactionsResult.data);
+        }
+      } catch (err: any) {
+        setError(err.message || "Something went wrong");
       }
 
       setLoading(false);
@@ -67,48 +71,55 @@ export default function DashboardPage() {
     e.preventDefault();
     setAddMoneyError("");
     setAddMoneySuccess(false);
-    
+
     const amount = parseFloat(addMoneyAmount);
     if (isNaN(amount) || amount <= 0) {
       setAddMoneyError("Please enter a valid amount");
       return;
     }
-    
+
     setAddMoneyLoading(true);
+
     const result = await walletApi.addMoney(amount);
+
     setAddMoneyLoading(false);
-    
+
     if (result.error) {
       setAddMoneyError(result.error);
     } else if (result.data) {
       setBalance(result.data.balance);
       setAddMoneySuccess(true);
       setAddMoneyAmount("");
+
       setTimeout(() => {
         setShowAddMoneyModal(false);
         setAddMoneySuccess(false);
-      }, 1500);
+      }, 1200);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+        <div className="text-lg font-semibold">Loading dashboard...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-blue-600 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
+
+      {/* NAVBAR */}
+      <nav className="bg-white border-b shadow-sm p-4">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">FlowPay</h1>
+          <h1 className="text-xl font-bold text-blue-600">FlowPay</h1>
+
           <div className="flex items-center gap-4">
-            <span>{user}</span>
+            <span className="text-gray-600 text-sm">{user}</span>
+
             <button
               onClick={handleLogout}
-              className="bg-blue-700 px-4 py-2 rounded hover:bg-blue-800"
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
             >
               Logout
             </button>
@@ -117,128 +128,158 @@ export default function DashboardPage() {
       </nav>
 
       <main className="max-w-4xl mx-auto p-6">
+
+        {/* ERROR */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+          <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4">
             {error}
           </div>
         )}
 
+        {/* TOP CARDS */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
-          {/* Wallet Card */}
-          <div className="bg-white p-6 rounded shadow">
-            <h2 className="text-xl font-bold mb-2">Wallet Balance</h2>
-            <p className="text-3xl font-bold text-green-600">
+
+          {/* WALLET CARD */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-2xl shadow-lg">
+            <p className="text-sm opacity-80">Available Balance</p>
+
+            <h2 className="text-4xl font-bold mt-2">
               KSh {balance !== null ? balance.toLocaleString() : "0"}
-            </p>
+            </h2>
+
             {walletId && (
-              <p className="text-sm text-gray-500 mt-2">
-                Your Wallet ID: {walletId}
+              <p className="text-xs opacity-70 mt-2">
+                Wallet ID: {walletId}
               </p>
             )}
+
             <button
               onClick={() => setShowAddMoneyModal(true)}
-              className="mt-4 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 w-full"
+              className="mt-6 bg-white text-blue-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-100 transition w-full"
             >
               Add Money
             </button>
           </div>
 
-          {/* Quick Actions */}
-          <div className="bg-white p-6 rounded shadow">
+          {/* QUICK ACTIONS */}
+          <div className="bg-white p-6 rounded-2xl shadow-md border">
             <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+
             <button
               onClick={() => router.push("/transfer")}
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 w-full"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold w-full"
             >
               Transfer Money
             </button>
           </div>
         </div>
 
-        {/* Transactions */}
-        <div className="bg-white p-6 rounded shadow">
+        {/* TRANSACTIONS */}
+        <div className="bg-white p-6 rounded-2xl shadow-md">
           <h2 className="text-xl font-bold mb-4">Recent Transactions</h2>
+
           {transactions.length === 0 ? (
             <p className="text-gray-500">No transactions yet.</p>
           ) : (
-            <div className="space-y-3">
-              {transactions.map((tx, index) => (
-                <div
-                  key={index}
-                  className="border-b pb-3 last:border-b-0"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">
-                        {tx.type === "sent" ? "Money Sent" : "Money Received"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {tx.type === "sent" 
-                          ? `To Wallet #${tx.other_party_wallet_id}` 
-                          : `From Wallet #${tx.other_party_wallet_id}`}
-                      </p>
-                    </div>
-                    <p className={`font-bold ${tx.type === "sent" ? "text-red-600" : "text-green-600"}`}>
-                      {tx.type === "sent" ? "-" : "+"}KSh {tx.amount.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b text-gray-500 text-sm">
+                    <th className="py-2">Type</th>
+                    <th>Wallet</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {transactions.map((tx, index) => (
+                    <tr key={index} className="border-b hover:bg-gray-50">
+                      <td className="py-3 font-medium">
+                        {tx.type === "sent" ? "Transfer" : "Received"}
+                      </td>
+
+                      <td className="text-gray-500 text-sm">
+                        #{tx.other_party_wallet_id}
+                      </td>
+
+                      <td
+                        className={`font-semibold ${
+                          tx.type === "sent"
+                            ? "text-red-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {tx.type === "sent" ? "-" : "+"}KSh{" "}
+                        {tx.amount.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
       </main>
 
-      {/* Add Money Modal */}
+      {/* ADD MONEY MODAL */}
       {showAddMoneyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Add Money to Wallet</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
+
+            <h2 className="text-xl font-bold mb-4">
+              Add Money
+            </h2>
+
             <form onSubmit={handleAddMoney}>
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-2">Amount (KSh)</label>
-                <input
-                  type="number"
-                  min="1"
-                  step="0.01"
-                  value={addMoneyAmount}
-                  onChange={(e) => setAddMoneyAmount(e.target.value)}
-                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Enter amount"
-                  required
-                />
-              </div>
+
+              <input
+                type="number"
+                value={addMoneyAmount}
+                onChange={(e) => setAddMoneyAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="w-full border p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+
               {addMoneyError && (
-                <div className="mb-4 text-red-600 text-sm">{addMoneyError}</div>
+                <p className="text-red-500 text-sm mb-2">
+                  {addMoneyError}
+                </p>
               )}
+
               {addMoneySuccess && (
-                <div className="mb-4 text-green-600 text-sm">Money added successfully!</div>
+                <p className="text-green-600 text-sm mb-2">
+                  Money added successfully!
+                </p>
               )}
+
               <div className="flex gap-3">
                 <button
                   type="submit"
                   disabled={addMoneyLoading}
-                  className="flex-1 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                  className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
                 >
-                  {addMoneyLoading ? "Adding..." : "Add Money"}
+                  {addMoneyLoading ? "Adding..." : "Add"}
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
                     setShowAddMoneyModal(false);
-                    setAddMoneyError("");
                     setAddMoneyAmount("");
+                    setAddMoneyError("");
                     setAddMoneySuccess(false);
                   }}
-                  className="flex-1 bg-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-400"
+                  className="flex-1 bg-gray-300 py-2 rounded-lg"
                 >
                   Cancel
                 </button>
               </div>
+
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }
