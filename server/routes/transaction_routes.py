@@ -21,6 +21,16 @@ def transfer():
     sender_wallet = Wallet.query.filter_by(user_id=sender_id).first()
     receiver_wallet = Wallet.query.get(receiver_wallet_id)
 
+    # Fallback: allow lookup by user_id if the sender uses the recipient's user ID
+    if not receiver_wallet:
+        receiver_wallet = Wallet.query.filter_by(user_id=receiver_wallet_id).first()
+
+    if not receiver_wallet:
+        return jsonify({"error": "Recipient wallet not found. Use the recipient's wallet ID from their dashboard."}), 404
+
+    if sender_wallet.id == receiver_wallet.id:
+        return jsonify({"error": "Cannot transfer to your own wallet"}), 400
+
     if sender_wallet.balance < amount:
         return jsonify({"error": "Insufficient balance"}), 400
 

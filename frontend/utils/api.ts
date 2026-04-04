@@ -66,6 +66,12 @@ export const walletApi = {
       body: JSON.stringify({ amount }),
     });
   },
+
+  verify: async (walletId: number) => {
+    return fetchApi<{ id: number }>(`/wallet/verify/${walletId}`, {
+      method: "GET",
+    });
+  },
 };
 
 // Transaction API
