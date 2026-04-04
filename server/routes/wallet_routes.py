@@ -44,3 +44,26 @@ def add_money():
         "id": wallet.id,
         "balance": wallet.balance
     })
+
+
+@wallet_bp.route("/verify/<int:wallet_id>", methods=["GET"])
+@jwt_required()
+def verify_wallet(wallet_id):
+    user_id = get_jwt_identity()
+
+    sender_wallet = Wallet.query.filter_by(user_id=user_id).first()
+    recipient_wallet = Wallet.query.get(wallet_id)
+
+    if not recipient_wallet:
+        return jsonify({"error": "Recipient wallet not found"}), 404
+
+    if not sender_wallet:
+        return jsonify({"error": "Sender wallet not found"}), 404
+
+    if sender_wallet.id == recipient_wallet.id:
+        return jsonify({"error": "Cannot verify your own wallet"}), 400
+
+    return jsonify({
+        "message": "Recipient wallet verified",
+        "id": recipient_wallet.id
+    })
