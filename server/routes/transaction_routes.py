@@ -71,7 +71,9 @@ def get_transactions():
         results.append({
             "amount": t.amount,
             "type": "sent" if is_sender else "received",
-            "other_party_wallet_id": t.receiver_id if is_sender else t.sender_id
+            "other_party_wallet_id": t.receiver_id if is_sender else t.sender_id,
+            "date": t.timestamp.isoformat() if t.timestamp else None,
+            "status": "completed"
         })
 
     return jsonify(results)
