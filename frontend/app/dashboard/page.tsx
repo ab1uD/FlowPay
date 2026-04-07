@@ -9,6 +9,8 @@ interface Transaction {
   amount: number;
   type: "sent" | "received";
   other_party_wallet_id: number;
+  date?: string;
+  status?: "completed" | "pending" | "failed";
 }
 
 export default function DashboardPage() {
@@ -184,26 +186,24 @@ export default function DashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b text-gray-500 text-sm">
-                    <th className="py-2">Type</th>
-                    <th>Wallet</th>
-                    <th>Amount</th>
+                  <tr className="border-b text-gray-500 text-sm font-semibold">
+                    <th className="py-3 px-2">Date</th>
+                    <th className="py-3 px-2">Amount</th>
+                    <th className="py-3 px-2">Status</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {transactions.map((tx, index) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
-                      <td className="py-3 font-medium">
-                        {tx.type === "sent" ? "Transfer" : "Received"}
-                      </td>
-
-                      <td className="text-gray-500 text-sm">
-                        #{tx.other_party_wallet_id}
+                      <td className="py-3 px-2 text-sm">
+                        {tx.date
+                          ? new Date(tx.date).toLocaleDateString()
+                          : "N/A"}
                       </td>
 
                       <td
-                        className={`font-semibold ${
+                        className={`py-3 px-2 font-semibold ${
                           tx.type === "sent"
                             ? "text-red-600"
                             : "text-green-600"
@@ -211,6 +211,20 @@ export default function DashboardPage() {
                       >
                         {tx.type === "sent" ? "-" : "+"}KSh{" "}
                         {tx.amount.toLocaleString()}
+                      </td>
+
+                      <td className="py-3 px-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            tx.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : tx.status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {tx.status ? tx.status.charAt(0).toUpperCase() + tx.status.slice(1) : "Completed"}
+                        </span>
                       </td>
                     </tr>
                   ))}
