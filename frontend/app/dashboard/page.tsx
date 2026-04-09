@@ -314,6 +314,7 @@ export default function DashboardPage() {
                 <thead>
                   <tr className="border-b text-gray-500 text-sm font-semibold">
                     <th className="py-3 px-2">Date</th>
+                    <th className="py-3 px-2">Type</th>
                     <th className="py-3 px-2">Amount</th>
                     <th className="py-3 px-2">Status</th>
                   </tr>
@@ -326,6 +327,18 @@ export default function DashboardPage() {
                         {tx.date
                           ? new Date(tx.date).toLocaleDateString()
                           : "N/A"}
+                      </td>
+
+                      <td className="py-3 px-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            tx.type === "sent"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {tx.type === "sent" ? "Sent" : "Received"}
+                        </span>
                       </td>
 
                       <td
