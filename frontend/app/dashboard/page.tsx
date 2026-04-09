@@ -29,6 +29,16 @@ export default function DashboardPage() {
   const [addMoneyError, setAddMoneyError] = useState("");
   const [addMoneySuccess, setAddMoneySuccess] = useState(false);
 
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferRecipientId, setTransferRecipientId] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferError, setTransferError] = useState("");
+  const [transferSuccess, setTransferSuccess] = useState(false);
+  const [recipientValid, setRecipientValid] = useState<boolean | null>(null);
+  const [recipientMessage, setRecipientMessage] = useState("");
+  const [verifyingRecipient, setVerifyingRecipient] = useState(false);
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/login");
@@ -96,6 +106,102 @@ export default function DashboardPage() {
       setTimeout(() => {
         setShowAddMoneyModal(false);
         setAddMoneySuccess(false);
+      }, 1200);
+    }
+  };
+
+  const verifyRecipient = async () => {
+    setTransferError("");
+    setRecipientMessage("");
+    setRecipientValid(null);
+
+    const walletIdNum = parseInt(transferRecipientId);
+    if (isNaN(walletIdNum)) {
+      setRecipientMessage("Please enter a valid wallet ID to verify");
+      setRecipientValid(false);
+      return;
+    }
+
+    if (walletId !== null && walletIdNum === walletId) {
+      setRecipientMessage("You cannot verify your own wallet");
+      setRecipientValid(false);
+      return;
+    }
+
+    setVerifyingRecipient(true);
+    const result = await walletApi.verify(walletIdNum);
+    setVerifyingRecipient(false);
+
+    if (result.error) {
+      setRecipientMessage(result.error);
+      setRecipientValid(false);
+    } else {
+      setRecipientMessage("Recipient wallet verified ✓");
+      setRecipientValid(true);
+    }
+  };
+
+  const handleTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTransferError("");
+    setTransferSuccess(false);
+
+    const recipientIdNum = parseInt(transferRecipientId);
+    const amountNum = parseFloat(transferAmount);
+
+    if (isNaN(recipientIdNum)) {
+      setTransferError("Please enter a valid wallet ID");
+      return;
+    }
+
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setTransferError("Please enter a valid amount");
+      return;
+    }
+
+    if (balance !== null && amountNum > balance) {
+      setTransferError("Insufficient balance");
+      return;
+    }
+
+    if (walletId !== null && recipientIdNum === walletId) {
+      setTransferError("You cannot transfer to your own wallet");
+      return;
+    }
+
+    if (!recipientValid) {
+      setTransferError("Please verify the recipient wallet first");
+      return;
+    }
+
+    setTransferLoading(true);
+
+    const result = await transactionApi.transfer(recipientIdNum, amountNum);
+
+    setTransferLoading(false);
+
+    if (result.error) {
+      setTransferError(result.error);
+    } else {
+      setTransferSuccess(true);
+      // Refresh balance
+      const walletResult = await walletApi.getBalance();
+      if (walletResult.data) {
+        setBalance(walletResult.data.balance);
+      }
+      // Refresh transactions
+      const transactionsResult = await transactionApi.getAll();
+      if (transactionsResult.data) {
+        setTransactions(transactionsResult.data);
+      }
+      setTransferRecipientId("");
+      setTransferAmount("");
+
+      setTimeout(() => {
+        setShowTransferModal(false);
+        setTransferSuccess(false);
+        setRecipientValid(null);
+        setRecipientMessage("");
       }, 1200);
     }
   };
@@ -168,7 +274,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
 
             <button
-              onClick={() => router.push("/transfer")}
+              onClick={() => setShowTransferModal(true)}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold w-full"
             >
               Transfer Money
@@ -284,6 +390,105 @@ export default function DashboardPage() {
                     setAddMoneySuccess(false);
                   }}
                   className="flex-1 bg-gray-300 py-2 rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* TRANSFER MODAL */}
+      {showTransferModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
+
+            <h2 className="text-xl font-bold mb-4">Transfer Money</h2>
+
+            <form onSubmit={handleTransfer}>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  Recipient Wallet ID
+                </label>
+                <div className="flex gap-2 items-start">
+                  <input
+                    type="number"
+                    value={transferRecipientId}
+                    onChange={(e) => {
+                      setTransferRecipientId(e.target.value);
+                      setRecipientValid(null);
+                      setRecipientMessage("");
+                    }}
+                    placeholder="Enter wallet ID"
+                    className="flex-1 border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={verifyRecipient}
+                    disabled={verifyingRecipient || transferRecipientId.trim() === ""}
+                    className="bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {verifyingRecipient ? "Checking..." : "Verify"}
+                  </button>
+                </div>
+                {recipientMessage && (
+                  <p className={`mt-2 text-sm font-medium ${recipientValid ? "text-green-600" : "text-red-600"}`}>
+                    {recipientMessage}
+                  </p>
+                )}
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  Amount (KSh)
+                </label>
+                <input
+                  type="number"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              {transferError && (
+                <p className="text-red-500 text-sm mb-3 bg-red-50 p-3 rounded">
+                  {transferError}
+                </p>
+              )}
+
+              {transferSuccess && (
+                <p className="text-green-600 text-sm mb-3 bg-green-50 p-3 rounded font-medium">
+                  Transfer successful!
+                </p>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={transferLoading || !recipientValid}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
+                >
+                  {transferLoading ? "Transferring..." : "Transfer"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTransferModal(false);
+                    setTransferRecipientId("");
+                    setTransferAmount("");
+                    setTransferError("");
+                    setTransferSuccess(false);
+                    setRecipientValid(null);
+                    setRecipientMessage("");
+                  }}
+                  className="flex-1 bg-gray-300 py-3 rounded-lg hover:bg-gray-400 font-semibold"
                 >
                   Cancel
                 </button>
