@@ -72,6 +72,26 @@ export default function DashboardPage() {
     };
 
     fetchData();
+
+    // Real-time balance update - polling every 10 seconds
+    const balanceInterval = setInterval(async () => {
+      try {
+        const walletResult = await walletApi.getBalance();
+        if (walletResult.data) {
+          setBalance(walletResult.data.balance);
+        }
+
+        const transactionsResult = await transactionApi.getAll();
+        if (transactionsResult.data) {
+          setTransactions(transactionsResult.data);
+        }
+      } catch (err: any) {
+        // Silent error - don't show loading state for background updates
+        console.error("Failed to update balance:", err.message);
+      }
+    }, 10000); // Update every 10 seconds
+
+    return () => clearInterval(balanceInterval);
   }, [isAuthenticated, router]);
 
   const handleLogout = () => {
