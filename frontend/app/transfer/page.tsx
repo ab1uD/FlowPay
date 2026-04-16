@@ -21,7 +21,7 @@ export default function TransferPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push("/");
       return;
     }
 
