@@ -41,7 +41,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login");
+      router.push("/");
       return;
     }
 
@@ -96,7 +96,7 @@ export default function DashboardPage() {
 
   const handleLogout = () => {
     logout();
-    router.push("/login");
+    router.push("/");
   };
 
   const handleAddMoney = async (e: React.FormEvent) => {
