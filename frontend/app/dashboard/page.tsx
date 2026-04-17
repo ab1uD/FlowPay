@@ -242,36 +242,21 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
 
       <nav className="bg-slate-800/50 backdrop-blur-lg border-b border-slate-700/50 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link href="/" className="flex items-center gap-3 text-white">
-              <div className="w-9 h-9 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-lg flex items-center justify-center">
-                <span className="text-slate-900 font-bold text-sm">FP</span>
-              </div>
-              <div>
-                <p className="font-semibold">FlowPay</p>
-                <p className="text-xs text-slate-400">Dashboard</p>
-              </div>
-            </Link>
-            <div className="flex flex-wrap items-center gap-2">
-              <Link href="/" className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/20">
-                Home
-              </Link>
-              <Link href="/dashboard" className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-200 transition hover:bg-emerald-400/20">
-                Dashboard
-              </Link>
-              <Link href="/transfer" className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-200 transition hover:bg-cyan-400/20">
-                Transfer
-              </Link>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 text-white">
+            <div className="w-9 h-9 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-lg flex items-center justify-center">
+              <span className="text-slate-900 font-bold text-sm">FP</span>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold">FlowPay</p>
+              <p className="text-xs text-slate-400">Dashboard</p>
+            </div>
+          </Link>
+          <div className="flex items-center gap-4">
             <div className="flex items-center space-x-2 text-slate-300">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
               <span className="text-sm font-medium">{user}</span>
             </div>
-
             <button
               onClick={handleLogout}
               className="bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg transition-all duration-200 border border-red-500/20 hover:border-red-500/30"
